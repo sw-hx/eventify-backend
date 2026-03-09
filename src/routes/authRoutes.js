@@ -3,6 +3,7 @@ import patternChecker from "../utility/patternCheckerHelperFunction.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import hashPassword from "../utility/hashPassword.js";
 import isExist from "../dao/userHelperMethods.js";
+import registerUser from "../dao/registerUser.js";
 //this mapped to /api/auth
 const router = express.Router();
 
@@ -46,6 +47,14 @@ router.post("/register", async (req, res) => {
     const response = {
       message: `you need to verify your email please check your email: ${email} inbox for verification link `,
     };
+
+    /**
+     *
+     * to do create a token and send it as email to user to verify it,s email
+     */
+
+    //now save the user info to database
+    await registerUser(username, fullName, email, hashedPassword);
     res.json(response);
 
     // handel exceptions
