@@ -7,7 +7,6 @@ export const ACCOUNT_STATUS = Object.freeze({
 
 // Allowed user roles
 export const USER_ROLE = Object.freeze({
-  USER: "user",
+  CLIENT: "client",
   ADMIN: "admin",
-  MODERATOR: "moderator",
 });
