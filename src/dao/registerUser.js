@@ -3,11 +3,13 @@ import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import sequelize from "../models/index.js";
 import { ACCOUNT_STATUS } from "../enums.js";
 
-const registerUser = async (username, full_name, email, password_hash) => {
+const registerUser = async (username, full_name, email, password_hash ,firebase_uid) => {
+  let transaction ;
   try {
-    const transaction = await models.user.sequelize.transaction();
+    transaction = await models.user.sequelize.transaction();
     const user = await models.user.create(
       {
+        firebase_uid,
         username,
         full_name,
         email,
@@ -41,6 +43,7 @@ const registerUser = async (username, full_name, email, password_hash) => {
       message: "User registered successfully. Check your email to verify.",
     };
   } catch (exception) {
+    transaction.rollback();
     const message = `Error cannot register user: ${email || username}`;
     errorFormatter.printError(exception, message);
     errorFormatter.throwError(500, message);

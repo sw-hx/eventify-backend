@@ -1,4 +1,4 @@
-import express, { response } from "express";
+import express from "express";
 import patternChecker from "../utility/patternCheckerHelperFunction.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import hashPassword from "../utility/hashPassword.js";
@@ -6,6 +6,9 @@ import isExist from "../dao/userHelperMethods.js";
 import getUserByEmail from "../dao/getUserByEmail.js";
 import { generateToken } from "../security/jwt.js";
 import registerUser from "../dao/registerUser.js";
+import admin from '../config/firebase.js'
+import nodemailer from "nodemailer";
+import models from "../models/index.js";
 //this mapped to /api/auth
 const router = express.Router();
 
@@ -46,17 +49,54 @@ router.post("/register", async (req, res) => {
     const hashedPassword = await hashPassword(password);
 
     // sending the final response if no exception happens
-    const response = {
-      message: `you need to verify your email please check your email: ${email} inbox for verification link `,
-    };
+  
 
     /**
      *
      * to do create a token and send it as email to user to verify it,s email
      */
+     
+const userRecord = await admin.auth().createUser({
+  email,
+  password,
+});
+
+
+const verificationLink = await admin
+  .auth()
+  .generateEmailVerificationLink(email, {
+    url: `${process.env.BASE_URL}/api/auth/verify-email?uid=${userRecord.uid}`,
+  });
+
+
+
+
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: process.env.EMAIL_PORT,
+  secure: false, 
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+await transporter.sendMail({
+  from: `"Eventify" <${process.env.EMAIL_USER}>`,
+  to: email,
+  subject: "Verify your email",
+  html: `<p>Hi ${fullName},</p>
+         <p>Click the link below to verify your email:</p>
+         <a href="${verificationLink}">${verificationLink}</a>`,
+});
+
 
     //now save the user info to database
-    await registerUser(username, fullName, email, hashedPassword);
+    await registerUser(username, fullName, email, hashedPassword,userRecord.uid);
+
+    const response = {
+      message: `you need to verify your email please check your email: ${email} inbox for verification link `,
+    };
     res.json(response);
 
     // handel exceptions
@@ -95,6 +135,28 @@ router.post("/login", async (req, res) => {
     res.status(err.status || 500).json({
       message: err.message || "Internal server error",
     });
+  }
+});
+
+
+router.get("/verify-email", async (req, res) => {
+  try {
+    const { uid } = req.query;
+
+    
+    const user = await models.user.findOne({ where: { firebase_uid: uid } });
+
+    if (!user) {
+      return res.status(404).send("❌ User not found.");
+    }
+
+    user.email_verified = true;
+    await user.save();
+
+    res.send("✅ Your email has been successfully verified! You can now log in.");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("❌ An error occurred while verifying your email.");
   }
 });
 
