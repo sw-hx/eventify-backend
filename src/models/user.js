@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
-export default function (sequelize, DataTypes) {
+
+export default function (sequelize) {
   return sequelize.define(
     "user",
     {
@@ -8,6 +9,11 @@ export default function (sequelize, DataTypes) {
         type: DataTypes.BIGINT.UNSIGNED,
         allowNull: false,
         primaryKey: true,
+      },
+      firebase_uid: {
+        type: DataTypes.STRING(255),
+        allowNull: false,
+        unique: true,
       },
       username: {
         type: DataTypes.STRING(30),
@@ -26,7 +32,7 @@ export default function (sequelize, DataTypes) {
       email_verified: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: false,
       },
       password_hash: {
         type: DataTypes.STRING(255),
@@ -54,35 +60,12 @@ export default function (sequelize, DataTypes) {
       createdAt: "created_at",
       updatedAt: "updated_at",
       indexes: [
-        {
-          name: "PRIMARY",
-          unique: true,
-          using: "BTREE",
-          fields: [{ name: "id" }],
-        },
-        {
-          name: "uq_users_username",
-          unique: true,
-          using: "BTREE",
-          fields: [{ name: "username" }],
-        },
-        {
-          name: "uq_users_email",
-          unique: true,
-          using: "BTREE",
-          fields: [{ name: "email" }],
-        },
-        {
-          name: "idx_users_role",
-          using: "BTREE",
-          fields: [{ name: "user_role" }],
-        },
-        {
-          name: "idx_users_created_at",
-          using: "BTREE",
-          fields: [{ name: "created_at" }],
-        },
+        { name: "PRIMARY", unique: true, using: "BTREE", fields: [{ name: "id" }] },
+        { name: "uq_users_username", unique: true, using: "BTREE", fields: [{ name: "username" }] },
+        { name: "uq_users_email", unique: true, using: "BTREE", fields: [{ name: "email" }] },
+        { name: "idx_users_role", using: "BTREE", fields: [{ name: "user_role" }] },
+        { name: "idx_users_created_at", using: "BTREE", fields: [{ name: "created_at" }] },
       ],
-    },
+    }
   );
 }
