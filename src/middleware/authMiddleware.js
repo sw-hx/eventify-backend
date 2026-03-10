@@ -14,6 +14,8 @@ function authMiddleware(req, res, next) {
     }
 
     req.userId = decoded.id;
+    req.email = decoded.email;
+    req.role = decoded.role;
     next();
   });
 }
