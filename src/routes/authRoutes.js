@@ -4,7 +4,7 @@ import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import hashPassword from "../utility/hashPassword.js";
 import isExist from "../dao/userHelperMethods.js";
 import getUserByEmail from "../dao/getUserByEmail.js";
-import {generateToken} from "../security/jwt.js"
+import { generateToken } from "../security/jwt.js";
 import registerUser from "../dao/registerUser.js";
 //this mapped to /api/auth
 const router = express.Router();
@@ -67,47 +67,35 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post('/login',async(req,res)=>{
-
-  try{
+// login endpoint
+router.post("/login", async (req, res) => {
+  try {
     patternChecker.verifyEmptyData({ body: req.body });
     patternChecker.verifyEmptyData({
       email: req.body.email,
       password: req.body.password,
     });
-     const { email, password} = req.body;
+    const { email, password } = req.body;
 
-      patternChecker.verifyEmailPattern(email);
+    patternChecker.verifyEmailPattern(email);
 
-      const user = await getUserByEmail(email,password);
+    const user = await getUserByEmail(email, password);
 
-      const token = generateToken({ 
-        id: user.id,
-         email: user.email ,
-          role : user.user_role
-        });
+    const token = generateToken({
+      id: user.id,
+      email: user.email,
+      role: user.user_role,
+    });
 
-     const { id, userEmail, full_name ,username , user_role} = user;
-     const response = { id, userEmail, full_name, username, user_role, token};
+    const { id, userEmail, full_name, username, user_role } = user;
+    const response = { id, userEmail, full_name, username, user_role, token };
 
     res.json(response);
-
-
-
-    
-
-  }catch(err){
-
+  } catch (err) {
     res.status(err.status || 500).json({
       message: err.message || "Internal server error",
     });
   }
-
-
-
-
-
 });
-
 
 export default router;
