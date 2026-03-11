@@ -47,7 +47,7 @@ const patternChecker = {
 
     return username;
   },
-  verifyPrice(price, filedName) {
+  verifyPriceOrId(price, filedName) {
     if (!Number.isFinite(price)) {
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,

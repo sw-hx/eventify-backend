@@ -27,8 +27,8 @@ router.post("/", async (req, res) => {
     const fixed_fee = Number(req.body.fixed_fee);
 
     patternChecker.verifyUsernamePattern(category_name, "category name");
-    patternChecker.verifyPrice(commission, "commission");
-    patternChecker.verifyPrice(fixed_fee, "fixed_fee");
+    patternChecker.verifyPriceOrId(commission, "commission");
+    patternChecker.verifyPriceOrId(fixed_fee, "fixed_fee");
 
     /**
      * Database logic
@@ -89,7 +89,7 @@ router.patch("/:categoryId", async (req, res) => {
 
     if (commission !== undefined) {
       const commissionNumber = Number(commission);
-      patternChecker.verifyPrice(commissionNumber, "commission");
+      patternChecker.verifyPriceOrId(commissionNumber, "commission");
       category.commission = commissionNumber;
     }
 
@@ -103,7 +103,7 @@ router.patch("/:categoryId", async (req, res) => {
     }
     if (fixed_fee !== undefined) {
       const fixedFeeNumber = Number(fixed_fee);
-      patternChecker.verifyPrice(fixedFeeNumber, "fixed fee");
+      patternChecker.verifyPriceOrId(fixedFeeNumber, "fixed fee");
       category.fixed_fee = fixedFeeNumber;
     }
 
