@@ -61,6 +61,22 @@ router.post("/register", async (req, res) => {
     const generatedToken = TokenUtility.generate();
     const hashedToken = TokenUtility.hashToken(generatedToken);
 
+    console.log("email sending .....");
+
+    const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${generatedToken}`;
+
+    // const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // resend.emails.send({
+    //   from: "eventify@gojordan.me",
+    //   to: "mohammadramadan.app@gmail.com",
+    //   subject: "Verify your email",
+    //   html: `<p>Hi ${fullName},</p>
+    //      <p>Click the link below to verify your email:</p>
+    //      <a href="${verificationLink}">${verificationLink}</a>`,
+    // });
+
+    /////////////////////
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
@@ -71,20 +87,16 @@ router.post("/register", async (req, res) => {
       },
     });
 
-    console.log("email sending .....");
-
-    const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${generatedToken}`;
-
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    resend.emails.send({
-      from: "eventify@gojordan.me",
-      to: "mohammadramadan.app@gmail.com",
+    await transporter.sendMail({
+      from: `Eventify" <${process.env.EMAIL_USER}>`,
+      to: email,
       subject: "Verify your email",
       html: `<p>Hi ${fullName},</p>
          <p>Click the link below to verify your email:</p>
          <a href="${verificationLink}">${verificationLink}</a>`,
     });
+
+    ////////////////////
     console.log(`
       
      ##############################################
