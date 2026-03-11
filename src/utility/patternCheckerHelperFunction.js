@@ -5,7 +5,7 @@ const patternChecker = {
   //first helper
   verifyEmptyData(fields) {
     for (const [fieldName, value] of Object.entries(fields)) {
-      if (!value) {
+      if (value === undefined || value === "") {
         errorFormatter.throwError(400, `${fieldName} field is required`);
       }
     }
@@ -47,6 +47,38 @@ const patternChecker = {
 
     return username;
   },
+
+  verifyCountryPattern(country, fieldName) {
+    const countryNameRegex = /^[a-zA-Z\s\-]+$/;
+
+    if (!countryNameRegex.test(country)) {
+      errorFormatter.throwError(
+        400,
+        `${fieldName || "Country"} must contain only letters, spaces, and hyphens.`,
+      );
+    }
+  },
+
+  verifyCityPattern(city, fieldName) {
+    const cityNameRegex = /^[a-zA-Z\s'\-]+$/;
+
+    if (!cityNameRegex.test(city)) {
+      errorFormatter.throwError(
+        400,
+        `${fieldName || "City"} must contain only letters, spaces, apostrophes, and hyphens.`,
+      );
+    }
+  },
+  verifyStringLength(stringInput, fieldName, maxLengthInput) {
+    const maxLength = maxLengthInput || 1000;
+
+    if (stringInput.length > maxLength) {
+      errorFormatter.throwError(
+        400,
+        `${fieldName || "Service description"} must not exceed ${maxLength} characters.`,
+      );
+    }
+  },
   verifyPriceOrId(price, filedName) {
     if (!Number.isFinite(price)) {
       errorFormatter.throwError(
@@ -72,6 +104,26 @@ const patternChecker = {
         `${fieldName || "url"} must be a valid URL`,
       );
     }
+  },
+  verifyCoordinates(latitude, longitude) {
+    const lat = Number(latitude);
+    const lon = Number(longitude);
+
+    if (Number.isNaN(lat) || lat < -90 || lat > 90) {
+      errorFormatter.throwError(
+        400,
+        "latitude must be a number between -90 and 90",
+      );
+    }
+
+    if (Number.isNaN(lon) || lon < -180 || lon > 180) {
+      errorFormatter.throwError(
+        400,
+        "longitude must be a number between -180 and 180",
+      );
+    }
+
+    return { latitude: lat, longitude: lon };
   },
 };
 export default patternChecker;

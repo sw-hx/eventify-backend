@@ -94,7 +94,7 @@ router.patch("/:categoryId", async (req, res) => {
     }
 
     if (image !== undefined) {
-      if (image !== "null") {
+      if (image !== null) {
         patternChecker.verifyUrlPattern(image, "image_url");
         category.image = image;
       } else {
