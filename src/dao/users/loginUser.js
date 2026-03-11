@@ -2,7 +2,7 @@ import models from "../../models/index.js";
 import errorFormatter from "../../utility/errorFormatterHelperFunction.js";
 import argon2 from "argon2";
 
-const getUserByEmail = async (email, password) => {
+const loginUser = async (email, password) => {
   try {
     // const user = await models.user.findOne({ where: { email } });
     const User = models.user;
@@ -13,12 +13,12 @@ const getUserByEmail = async (email, password) => {
 
     if (!userEmail) {
       console.log(userEmail);
-      errorFormatter.throwError(404, "Invalid email or password 1");
+      errorFormatter.throwError(404, "Invalid email or password ");
     }
 
     const match = await argon2.verify(userEmail.password_hash, password);
     if (!match) {
-      errorFormatter.throwError(404, "Invalid email or password 2");
+      errorFormatter.throwError(404, "Invalid email or password");
     }
 
     if (!userEmail.email_verified) {
@@ -32,4 +32,4 @@ const getUserByEmail = async (email, password) => {
   }
 };
 
-export default getUserByEmail;
+export default loginUser;

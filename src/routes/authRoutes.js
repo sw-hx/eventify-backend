@@ -3,7 +3,7 @@ import patternChecker from "../utility/patternCheckerHelperFunction.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import hashPassword from "../utility/hashPassword.js";
 import isExist from "../dao/users/isExist.js";
-import getUserByEmail from "../dao/users/getUserByEmail.js";
+import loginUser from "../dao/users/loginUser.js";
 import { generateToken } from "../security/jwt.js";
 import registerUser from "../dao/users/registerUser.js";
 import nodemailer from "nodemailer";
@@ -12,6 +12,8 @@ import TokenUtility from "../security/generateToken.js";
 import { Resend } from "resend";
 import HTTPStatus from "../enums/httpCodeEnum.js";
 import { ACCOUNT_STATUS } from "../enums/userInfoEnum.js";
+import token_type from "../enums/token_types.js";
+import getUserInfo from '../dao/users/getUserInfo.js'
 
 //this mapped to /api/auth
 const router = express.Router();
@@ -136,7 +138,7 @@ router.post("/login", async (req, res) => {
 
     patternChecker.verifyEmailPattern(email);
 
-    const user = await getUserByEmail(email, password);
+    const user = await loginUser(email, password);
 
     const token = generateToken({
       id: user.id,
@@ -212,5 +214,199 @@ router.get("/verify-email", async (req, res) => {
     });
   }
 });
+
+router.post('/reset-password',async(req,res)=>{
+  let transaction;
+
+try{
+  patternChecker.verifyEmptyData({ body: req.body });
+    patternChecker.verifyEmptyData({
+      email: req.body.email,
+    });
+    const {email} =req.body
+
+     if(!isExist.Email(email)){
+      errorFormatter.throwError(HTTPStatus.NOT_FOUND, "User not found");
+     }
+      const generatedToken = TokenUtility.generate();
+      const hashedToken = TokenUtility.hashToken(generatedToken);
+
+    console.log("email sending .....");
+
+    const resetPasswordLink = `${process.env.BASE_URL}/api/auth/update-password?token=${generatedToken}`;
+    
+
+    // const resend = new Resend(process.env.RESEND_API_KEY);
+
+    // resend.emails.send({
+    //   from: "eventify@gojordan.me",
+    //   to: "mohammadramadan.app@gmail.com",
+    //   subject: "Verify your email",
+    //   html: `<p>Hi ${fullName},</p>
+    //      <p>Click the link below to verify your email:</p>
+    //      <a href="${verificationLink}">${verificationLink}</a>`,
+    // });
+
+    /////////////////////
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `Eventify" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Reset your password",
+      html: `<p>Hi ${email},</p>
+         <p>Click the link below to Reset your password:</p>
+         <a href="${resetPasswordLink}">${resetPasswordLink}</a>`,
+    });
+    console.log(generatedToken)
+
+    ////////////////////
+    console.log(`
+      
+     ##############################################
+     # 
+     #  the reset passowrd link is 
+     #  ${resetPasswordLink}
+     #############################################
+      
+      `);
+    console.log("email sended");
+
+
+    transaction = await models.user.sequelize.transaction();
+
+    const user = await getUserInfo(email);
+
+    const expires_at = new Date(Date.now() + 30 * 60 * 1000);
+
+     const user_token = await models.user_token.create(
+      {
+        token_type: token_type.PASSWORD_RESET,
+        token_hash:hashedToken,
+        expires_at,
+        user_id: user.id,
+      },
+      { transaction: transaction },
+    );
+
+
+
+   
+const message = `The reset password link has sent to your email : ${email} `;
+
+    await transaction.commit();
+
+    return res.json({
+      message,
+    })
+
+   
+
+}catch(err){
+
+  if (transaction) await transaction.rollback();
+ res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+}
+
+
+})
+
+router.post('/update-password',async(req,res)=>{
+
+  let transaction;
+  try {
+     patternChecker.verifyEmptyData({ body: req.body });
+    patternChecker.verifyEmptyData({
+      new_password:req.body.new_password,
+    });
+
+    const { token } = req.query;
+    const {new_password} =req.body;
+
+
+
+    if (!token) {
+      errorFormatter.throwError(HTTPStatus.BAD_REQUEST, "Token is required");
+    }
+
+     patternChecker.verifyPasswordPattern(new_password);
+
+    // hash the token
+    const token_hash = TokenUtility.hashToken(token);
+
+    // find token in DB
+    const user_token = await models.user_token.findOne({
+      where: { token_hash },
+      include: [{ model: models.user, as: "user" }],
+    });
+
+    if (!user_token) {
+      errorFormatter.throwError(HTTPStatus.BAD_REQUEST, "Invalid token");
+    }
+
+    if (user_token.used) {
+      errorFormatter.throwError(HTTPStatus.BAD_REQUEST, "Token already used");
+    }
+
+    const now = new Date();
+    if (user_token.expires_at < now) {
+      errorFormatter.throwError(HTTPStatus.BAD_REQUEST, "Token expired");
+    }
+
+    
+    const user = user_token.user;
+
+    if (!user) {
+      errorFormatter.throwError(HTTPStatus.NOT_FOUND, "User not found");
+    }
+    if(!user. email_verified){
+       errorFormatter.throwError(HTTPStatus.NOT_FOUND, "User not verified");
+    }
+
+   
+    transaction = await models.user.sequelize.transaction();
+
+    
+
+    const newHashedPassword = await hashPassword(new_password);
+
+    await user.update(
+      { password_hash: newHashedPassword},
+      { transaction },
+    );
+
+    await user_token.update({ used: true }, { transaction });
+
+    await transaction.commit();
+
+    const message = 'The password successfully changed'
+
+     return res.json({
+      message
+     })
+
+
+
+  }catch(err){
+
+    if (transaction) await transaction.rollback();
+ res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
+
+
+})
 
 export default router;
