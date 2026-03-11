@@ -4,6 +4,7 @@ import trimMiddleware from "./middleware/trimMiddleware.js";
 import authRoutes from "./routes/authRoutes.js";
 import categoryRoutes from "./routes/categories.js";
 import serviceRoutes from "./routes/services.js";
+import userRoutes from './routes/userRoutes.js'
 import testDatabaseConnection from "./testing/database/connectToDatabase.js";
 import models from "./models/index.js";
 
@@ -24,6 +25,7 @@ app.use(trimMiddleware);
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", authMiddleware, categoryRoutes);
 app.use("/api/services", authMiddleware, serviceRoutes);
+app.use("/api/user",authMiddleware,userRoutes)
 
 app.listen(PORT, () => {
   console.log(`node is running at PORT ${PORT}`);
