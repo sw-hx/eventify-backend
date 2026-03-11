@@ -10,11 +10,6 @@ export default function (sequelize) {
         allowNull: false,
         primaryKey: true,
       },
-      firebase_uid: {
-        type: DataTypes.STRING(255),
-        allowNull: false,
-        unique: true,
-      },
       username: {
         type: DataTypes.STRING(30),
         allowNull: false,
@@ -60,12 +55,35 @@ export default function (sequelize) {
       createdAt: "created_at",
       updatedAt: "updated_at",
       indexes: [
-        { name: "PRIMARY", unique: true, using: "BTREE", fields: [{ name: "id" }] },
-        { name: "uq_users_username", unique: true, using: "BTREE", fields: [{ name: "username" }] },
-        { name: "uq_users_email", unique: true, using: "BTREE", fields: [{ name: "email" }] },
-        { name: "idx_users_role", using: "BTREE", fields: [{ name: "user_role" }] },
-        { name: "idx_users_created_at", using: "BTREE", fields: [{ name: "created_at" }] },
+        {
+          name: "PRIMARY",
+          unique: true,
+          using: "BTREE",
+          fields: [{ name: "id" }],
+        },
+        {
+          name: "uq_users_username",
+          unique: true,
+          using: "BTREE",
+          fields: [{ name: "username" }],
+        },
+        {
+          name: "uq_users_email",
+          unique: true,
+          using: "BTREE",
+          fields: [{ name: "email" }],
+        },
+        {
+          name: "idx_users_role",
+          using: "BTREE",
+          fields: [{ name: "user_role" }],
+        },
+        {
+          name: "idx_users_created_at",
+          using: "BTREE",
+          fields: [{ name: "created_at" }],
+        },
       ],
-    }
+    },
   );
 }

@@ -1,8 +1,9 @@
 import errorFormatter from "./errorFormatterHelperFunction.js";
+import HTTPStatus from "../enums/httpCodeEnum.js";
 
 const patternChecker = {
   //first helper
-  verifyEmptyData(fields, sendStatus) {
+  verifyEmptyData(fields) {
     for (const [fieldName, value] of Object.entries(fields)) {
       if (!value) {
         errorFormatter.throwError(400, `${fieldName} field is required`);
@@ -32,7 +33,7 @@ const patternChecker = {
       );
     }
   },
-  verifyUsernamePattern(username) {
+  verifyUsernamePattern(username, filedName) {
     username = username.toLowerCase();
 
     const usernameRegex = /^[a-z0-9_]{3,29}$/;
@@ -40,11 +41,25 @@ const patternChecker = {
     if (!usernameRegex.test(username)) {
       errorFormatter.throwError(
         400,
-        "Username must contain only lowercase letters, numbers, or underscores and be 3–29 characters long",
+        `${filedName || "username"} must contain only lowercase letters, numbers, or underscores and be 3–29 characters long`,
       );
     }
 
     return username;
+  },
+  verifyPrice(price, filedName) {
+    if (!Number.isFinite(price)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${filedName || "mony"} should be a number `,
+      );
+    }
+
+    if (price < 0)
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${filedName || "mony"} cannot have negative value `,
+      );
   },
 };
 export default patternChecker;
