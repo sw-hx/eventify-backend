@@ -85,7 +85,15 @@ router.post("/register", async (req, res) => {
          <p>Click the link below to verify your email:</p>
          <a href="${verificationLink}">${verificationLink}</a>`,
     });
-
+    console.log(`
+      
+     ##############################################
+     # 
+     #  the verification link is 
+     #  ${verificationLink}
+     #############################################
+      
+      `);
     console.log("email sended");
 
     //now save the user info to database
