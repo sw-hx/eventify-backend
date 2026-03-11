@@ -1,7 +1,10 @@
 import express from "express";
 import patternChecker from "../utility/patternCheckerHelperFunction.js";
 import roleChecker from "../utility/role_checker.js";
-
+import isExist from "../dao/categories/isExist.js";
+import addCategory from "../dao/categories/addCategory.js";
+import HTTPStatus from "../enums/httpCodeEnum.js";
+import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -31,9 +34,17 @@ router.post("/", async (req, res) => {
      */
 
     // verify the { category name } is not exists
+    if (isExist.name(category_name))
+      errorFormatter.throwError(
+        HTTPStatus.CONFLICT,
+        `there is already category with the same name: ${category_name}`,
+      );
 
     //add the category to database
+    const category = addCategory(category_name, commission, fixed_fee);
 
+    //send final response
+    res.status(HTTPStatus.CREATED).json(category);
     //seed success message to user
   } catch (err) {
     res.status(err.status || 500).json({
