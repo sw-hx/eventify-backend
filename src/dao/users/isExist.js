@@ -1,5 +1,5 @@
-import models from "../models/index.js";
-import errorFormatter from "../utility/errorFormatterHelperFunction.js";
+import models from "../../models/index.js";
+import errorFormatter from "../../utility/errorFormatterHelperFunction.js";
 
 const isExist = {
   Email: async (email) => {
@@ -37,5 +37,3 @@ const isExist = {
   },
 };
 export default isExist;
-
-

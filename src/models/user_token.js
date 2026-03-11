@@ -40,7 +40,7 @@ export default function (sequelize, DataTypes) {
       tableName: "user_tokens",
       timestamps: true,
       createdAt: "created_at",
-
+      updatedAt: false,
       indexes: [
         {
           name: "PRIMARY",
