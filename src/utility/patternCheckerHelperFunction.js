@@ -61,5 +61,17 @@ const patternChecker = {
         `${filedName || "mony"} cannot have negative value `,
       );
   },
+
+  verifyUrlPattern(url, fieldName) {
+    const urlRegex =
+      /^(https?:\/\/)?([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w\-.~:?#[\]@!$&'()*+,;=]*)?$/;
+
+    if (!urlRegex.test(url)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${fieldName || "url"} must be a valid URL`,
+      );
+    }
+  },
 };
 export default patternChecker;

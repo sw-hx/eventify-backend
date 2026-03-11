@@ -14,7 +14,7 @@ const isExist = {
       return userEmail ? true : false;
     } catch (exception) {
       const message = `Error cannot fetch email: ${email}`;
-      errorFormatter(exception, message);
+      errorFormatter.printError(exception, message);
       errorFormatter.throwError(500);
     }
   },
