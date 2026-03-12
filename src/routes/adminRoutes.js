@@ -7,6 +7,7 @@ import patternChecker from '../utility/patternCheckerHelperFunction.js'
 import errorFormatter from "../utility/errorFormatterHelperFunction.js"
 import HTTPStatus from "../enums/httpCodeEnum.js";
 import isExist from '../dao/users/isExist.js'
+import { Op } from "sequelize";
 
 
 
@@ -95,6 +96,97 @@ if (password !== undefined) {
 
     return res.json({
       message
+    });
+
+  } catch (err) {
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
+});
+
+
+
+router.get('/users', async (req, res) => {
+  try {
+    roleChecker.isAdmin(req.role);
+
+    const { 
+      role, 
+      created_at, 
+      order_by, 
+      email_verified, 
+      account_status, 
+      page = 1, 
+      page_size = 10 
+    } = req.query;
+
+    const User = models.user;
+    const where = {};
+
+    if (role !== undefined) {
+      if (!Object.values(USER_ROLE).includes(role)) {
+        errorFormatter.throwError(400, "Invalid user role");
+      }
+      where.user_role = role;
+    }
+
+    if (created_at !== undefined) {
+      where.created_at = { [Op.gt]: new Date(created_at) };
+    }
+    
+    if (email_verified !== undefined) {
+      const verified = parseInt(email_verified, 10);
+      if (verified !== 0 && verified !== 1) {
+        errorFormatter.throwError(400, "email_verified must be 0 or 1");
+      }
+      where.email_verified = verified;
+    }
+
+    if (account_status !== undefined) {
+      if (!Object.values(ACCOUNT_STATUS).includes(account_status)) {
+        errorFormatter.throwError(400, "Invalid account status");
+      }
+      where.account_status = account_status;
+    }
+
+    const order = [];
+    if (order_by !== undefined) {
+      if (!["ASC", "DESC"].includes(order_by.toUpperCase())) {
+        errorFormatter.throwError(400, "order_by must be ASC or DESC");
+      }
+      order.push(["created_at", order_by.toUpperCase()]);
+    }
+
+    const limit = parseInt(page_size, 10);
+    const offset = (parseInt(page, 10) - 1) * limit;
+
+    const { count, rows } = await User.findAndCountAll({
+      where,
+      order,
+      limit,
+      offset,
+      attributes: [
+        "id",
+        "full_name",
+        "email",
+        "username",
+        "profile_image",
+        "user_role",
+        "account_status",
+        "email_verified",
+        "created_at"
+      ]
+    });
+
+    res.status(200).json({
+      meta: {
+        total: count,
+        total_pages: Math.ceil(count / limit),
+        current_page: parseInt(page, 10),
+        page_size: limit
+      },
+      data: rows
     });
 
   } catch (err) {
