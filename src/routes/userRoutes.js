@@ -30,7 +30,10 @@ router.patch('/user-profile', async (req, res) => {
     console.log(username)
     console.log(user.username)
 
-    if(user.username === username){
+
+
+    if (username !== undefined && username !== "null") {
+      if(user.username === username){
         errorFormatter.throwError(
           HTTPStatus.CONFLICT,
           `Username already in use.`,
@@ -43,8 +46,11 @@ router.patch('/user-profile', async (req, res) => {
         );
     }
 
+    patternChecker.verifyUsernamePattern(username);
+    
     user.username =username;
 
+    }
 
 
     
