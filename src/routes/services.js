@@ -16,7 +16,11 @@ const router = express.Router();
 router.get('/:serviceId',async(req,res)=>{
   try{
 
-    const {serviceId} = req.params;
+    let { serviceId } = req.params;
+
+    serviceId = Number(serviceId)
+
+    patternChecker.verifyGTZero(serviceId,'service id')
 
     const service =  await models.service.findByPk(serviceId);
 
@@ -153,7 +157,7 @@ router.post("/", async (req, res) => {
     if (existingService) {
       // Throw a custom error before saving
       errorFormatter.throwError(
-        HTTPStatus.NOT_FOUND,
+        HTTPStatus.CONFLICT 
         `Service '${service_name}' already exists for the this user.`,
       );
     }
@@ -181,6 +185,169 @@ router.post("/", async (req, res) => {
 
     //send final response
     res.status(HTTPStatus.CREATED).json(service);
+  } catch (err) {
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
+});
+router.patch("/:serviceId", async (req, res) => {
+  try {
+    roleChecker.isAdmin(req.role);
+
+    patternChecker.verifyEmptyData({ body: req.body });
+
+    let { serviceId } = req.params;
+
+    serviceId = Number(serviceId)
+
+    patternChecker.verifyGTZero(serviceId,'service id')
+
+    const service = await models.service.findByPk(serviceId);
+
+    if (!service) {
+      errorFormatter.throwError(
+        HTTPStatus.NOT_FOUND,
+        `service with id ${serviceId} not found`,
+      );
+    }
+
+    const {
+      provider_name,
+      service_name,
+      serv_description,
+      main_image,
+      sub_image1,
+      sub_image2,
+      sub_image3,
+      sub_image4,
+      sub_image5,
+      country,
+      city,
+    } = req.body;
+
+    const category_id =
+      req.body.category_id !== undefined ? Number(req.body.category_id) : undefined;
+
+    const availability_count =
+      req.body.availability_count !== undefined
+        ? Number(req.body.availability_count)
+        : undefined;
+
+    const price_per_hour =
+      req.body.price_per_hour !== undefined
+        ? Number(req.body.price_per_hour)
+        : undefined;
+
+    const latitude =
+      req.body.latitude !== undefined ? Number(req.body.latitude) : undefined;
+
+    const longitude =
+      req.body.longitude !== undefined ? Number(req.body.longitude) : undefined;
+
+    if (category_id !== undefined) {
+      patternChecker.verifyNotNegative(category_id, "category_ID");
+
+      const category = await models.category.findByPk(category_id);
+      if (!category)
+        errorFormatter.throwError(
+          HTTPStatus.NOT_FOUND,
+          `we cannot find category`,
+        );
+
+      service.category_id = category_id;
+    }
+
+    if (availability_count !== undefined) {
+      patternChecker.verifyNotNegative(availability_count, "availability_count");
+      service.availability_count = availability_count;
+    }
+
+    if (price_per_hour !== undefined) {
+      patternChecker.verifyNotNegative(price_per_hour, "price_per_hour");
+      service.price_per_hour = price_per_hour;
+    }
+
+    if (latitude !== undefined && longitude !== undefined) {
+      patternChecker.verifyCoordinates(latitude, longitude);
+      service.latitude = latitude;
+      service.longitude = longitude;
+    }
+
+    if (provider_name !== undefined) {
+      patternChecker.verifyUsernamePattern(provider_name, "provider_name");
+      service.provider_name = provider_name;
+    }
+
+    if (service_name !== undefined) {
+      patternChecker.verifyUsernamePattern(service_name, "service_name");
+
+      const existingService = await models.service.findOne({
+        where: { created_by: service.created_by, service_name },
+      });
+
+      if (existingService && existingService.id !== service.id) {
+        errorFormatter.throwError(
+          HTTPStatus.CONFLICT,
+          `Service '${service_name}' already exists for this user.`,
+        );
+      }
+
+      service.service_name = service_name;
+    }
+
+    if (serv_description !== undefined) {
+      patternChecker.verifyStringLength(
+        serv_description,
+        "serv_description",
+        1500,
+      );
+      service.serv_description = serv_description;
+    }
+
+    if (country !== undefined) {
+      patternChecker.verifyCityPattern(country);
+      service.country = country;
+    }
+
+    if (city !== undefined) {
+      patternChecker.verifyCityPattern(city);
+      service.city = city;
+    }
+
+    if (main_image !== undefined) {
+      if (main_image !== null) patternChecker.verifyUrlPattern(main_image, "main_image");
+      service.main_image = main_image;
+    }
+
+    if (sub_image1 !== undefined) {
+      if (sub_image1 !== null) patternChecker.verifyUrlPattern(sub_image1, "sub_image1");
+      service.sub_image1 = sub_image1;
+    }
+
+    if (sub_image2 !== undefined) {
+      if (sub_image2 !== null) patternChecker.verifyUrlPattern(sub_image2, "sub_image2");
+      service.sub_image2 = sub_image2;
+    }
+
+    if (sub_image3 !== undefined) {
+      if (sub_image3 !== null) patternChecker.verifyUrlPattern(sub_image3, "sub_image3");
+      service.sub_image3 = sub_image3;
+    }
+
+    if (sub_image4 !== undefined) {
+      if (sub_image4 !== null) patternChecker.verifyUrlPattern(sub_image4, "sub_image4");
+      service.sub_image4 = sub_image4;
+    }
+
+    if (sub_image5 !== undefined) {
+      if (sub_image5 !== null) patternChecker.verifyUrlPattern(sub_image5, "sub_image5");
+      service.sub_image5 = sub_image5;
+    }
+
+    await service.save();
+
+    res.status(HTTPStatus.OK).json(service);
   } catch (err) {
     res.status(err.status || 500).json({
       message: err.message || "Internal server error",
