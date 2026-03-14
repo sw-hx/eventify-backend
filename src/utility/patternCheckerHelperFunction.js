@@ -1,5 +1,6 @@
 import errorFormatter from "./errorFormatterHelperFunction.js";
 import HTTPStatus from "../enums/httpCodeEnum.js";
+import { verify } from "crypto";
 
 const patternChecker = {
   //first helper
@@ -104,7 +105,7 @@ const patternChecker = {
     if (num < 1)
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
-        `${filedName || "mony"} cannot be  less than 1 `,
+        `${filedName || "money"} cannot be  less than 1 `,
       );
   },
   verifyNumber(num, filedName) {
@@ -146,6 +147,24 @@ const patternChecker = {
     }
 
     return { latitude: lat, longitude: lon };
+  },
+  verifyIsDate(inputDate, fieldName) {
+    const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
+
+    if (!isoRegex.test(inputDate)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${fieldName || "input date "}  must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)`,
+      );
+
+      const date = new Date(inputDate);
+      if (isNaN(date.getTime())) {
+        errorFormatter.throwError(
+          HTTPStatus.BAD_REQUEST,
+          `${fieldName || "input date "} must be a valid date`,
+        );
+      }
+    }
   },
 };
 export default patternChecker;
