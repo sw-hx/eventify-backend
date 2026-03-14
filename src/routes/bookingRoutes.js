@@ -9,7 +9,120 @@ import bookService from "../dao/book-service/bookService.js";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
 import getUserInfo from "../dao/users/getUserInfo.js";
 import nodemailer from "nodemailer";
+import priceForBookedService from "../dao/book-service/price_object_generator.js";
 const router = express.Router();
+
+router.get("/:id", async (req, res) => {
+  try {
+    //check admin
+    roleChecker.isAdmin(req.role);
+
+    //now get the id from url
+    const id = Number(req.params.id);
+    patternChecker.verifyGTZero(id, "booked id ");
+
+    //now fetch the booking information for the database
+    const Service = await models.service;
+    const user = await models.user;
+    const booked_service = await models.service_booking.findByPk(id, {
+      include: [
+        {
+          model: Service,
+          as: "service",
+        },
+        {
+          model: user,
+          as: "user",
+        },
+      ],
+    });
+
+    if (!booked_service)
+      errorFormatter.throwError(
+        HTTPStatus.NOT_FOUND,
+        `booked service with id:${id} cannot found `,
+      );
+
+    /**
+     *
+     * Now building the response
+     *
+     */
+
+    const booked_by = {
+      full_name: booked_service.user.full_name,
+      email: booked_service.user.email,
+    };
+    const price = priceForBookedService(booked_service);
+
+    res.status(HTTPStatus.OK).send({
+      booked_by,
+      service_name: booked_service.service.service_name,
+      price,
+    });
+  } catch (exception) {
+    res.status(exception.status || 500).json({
+      message: exception.message || "Internal server error",
+    });
+  }
+});
+
+// for user to get his only booked services details
+router.get("/user/:id", async (req, res) => {
+  try {
+    //now get the id from url
+    const id = Number(req.params.id);
+    patternChecker.verifyGTZero(id, "booked id ");
+
+    //now fetch the booking information for the database
+    const Service = await models.service;
+    const user = await models.user;
+    const booked_service = await models.service_booking.findOne({
+      include: [
+        {
+          model: Service,
+          as: "service",
+        },
+        {
+          model: user,
+          as: "user",
+        },
+      ],
+      where: {
+        id,
+        user_id: req.userId,
+      },
+    });
+
+    if (!booked_service)
+      errorFormatter.throwError(
+        HTTPStatus.NOT_FOUND,
+        `booked service with id:${id} cannot found `,
+      );
+
+    /**
+     *
+     * Now building the response
+     *
+     */
+
+    const booked_by = {
+      full_name: booked_service.user.full_name,
+      email: booked_service.user.email,
+    };
+    const price = priceForBookedService(booked_service);
+
+    res.status(HTTPStatus.OK).send({
+      booked_by,
+      service_name: booked_service.service.service_name,
+      price,
+    });
+  } catch (exception) {
+    res.status(exception.status || 500).json({
+      message: exception.message || "Internal server error",
+    });
+  }
+});
 
 router.post("/", async (req, res) => {
   try {
@@ -38,6 +151,7 @@ router.post("/", async (req, res) => {
      * Now reading data form database
      *
      */
+
     const Service = models.service;
     const Category = models.category;
 
@@ -135,7 +249,6 @@ router.post("/", async (req, res) => {
      */
     /////////////////////
     const user = await getUserInfo(req.email);
-
     const transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
@@ -151,15 +264,15 @@ router.post("/", async (req, res) => {
       to: req.email,
       subject: `Booking service confirmation ${service.service_name} `,
       html: `<p>Hi ${user.full_name},</p>
-               <p>You have booked service name : ${service.service_name} \n
-               the booking price details is : \n
-               duration hours ${response.pricing.duration_hours}$ \n
-               price per hour : ${response.pricing.price_per_hour}$ \n
-               base price : ${response.pricing.base_price}$ \n
-               commission percentage: ${response.pricing.commission_percentage}% \n
-               commission amount: ${response.pricing.commission_amount}$ \n
-               fixed_fee_amount: ${response.pricing.fixed_fee_amount}$ \n
-               total_price : ${response.pricing.total_price}$ \n
+               <p>You have booked service name : ${service.service_name}
+               the booking price details is :
+               duration hours ${response.pricing.duration_hours}$ 
+               price per hour : ${response.pricing.price_per_hour}$
+               base price : ${response.pricing.base_price}$ 
+               commission percentage: ${response.pricing.commission_percentage}%
+               commission amount: ${response.pricing.commission_amount}$ 
+               fixed_fee_amount: ${response.pricing.fixed_fee_amount}$ 
+               total_price : ${response.pricing.total_price}$ 
                </p>`,
     });
 

@@ -29,7 +29,7 @@ app.use("/api/categories", authMiddleware, categoryRoutes);
 app.use("/api/services", authMiddleware, serviceRoutes);
 app.use("/api/user", authMiddleware, userRoutes);
 app.use("/api/admin", authMiddleware, adminRoutes);
-app.use("/api/booking", authMiddleware, bookingRoutes);
+app.use("/api/bookings", authMiddleware, bookingRoutes);
 
 app.listen(PORT, () => {
   console.log(`node is running at PORT ${PORT}`);
