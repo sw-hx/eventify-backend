@@ -25,7 +25,7 @@ export default function (sequelize, DataTypes) {
           key: "id",
         },
       },
-      start_time: {
+      service_scheduled_date: {
         type: DataTypes.DATE(3),
         allowNull: false,
       },
@@ -38,6 +38,10 @@ export default function (sequelize, DataTypes) {
         allowNull: false,
       },
       commission_at_booking: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+      },
+      fixed_fee_at_booking: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
       },
