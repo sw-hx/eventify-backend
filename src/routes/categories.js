@@ -6,6 +6,8 @@ import addCategory from "../dao/categories/addCategory.js";
 import HTTPStatus from "../enums/httpCodeEnum.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import models from "../models/index.js";
+import buildPaginationMeta from "../utility/buildPaginationMeta.js";
+
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -27,8 +29,8 @@ router.post("/", async (req, res) => {
     const fixed_fee = Number(req.body.fixed_fee);
 
     patternChecker.verifyUsernamePattern(category_name, "category name");
-    patternChecker.verifyPriceOrId(commission, "commission");
-    patternChecker.verifyPriceOrId(fixed_fee, "fixed_fee");
+    patternChecker.verifyNotNegative(commission, "commission");
+    patternChecker.verifyNotNegative(fixed_fee, "fixed_fee");
 
     /**
      * Database logic
@@ -89,7 +91,7 @@ router.patch("/:categoryId", async (req, res) => {
 
     if (commission !== undefined) {
       const commissionNumber = Number(commission);
-      patternChecker.verifyPriceOrId(commissionNumber, "commission");
+      patternChecker.verifyNotNegative(commissionNumber, "commission");
       category.commission = commissionNumber;
     }
 
@@ -103,7 +105,7 @@ router.patch("/:categoryId", async (req, res) => {
     }
     if (fixed_fee !== undefined) {
       const fixedFeeNumber = Number(fixed_fee);
-      patternChecker.verifyPriceOrId(fixedFeeNumber, "fixed fee");
+      patternChecker.verifyNotNegative(fixedFeeNumber, "fixed fee");
       category.fixed_fee = fixedFeeNumber;
     }
 
@@ -114,6 +116,36 @@ router.patch("/:categoryId", async (req, res) => {
   } catch (err) {
     res.status(err.status || 500).json({
       message: err.message || "Internal server error",
+    });
+  }
+});
+
+router.get("/", async (req, res) => {
+  try {
+    let { page = 1, page_size = 10 } = req.query;
+
+    page = Number(page);
+    const limit = Number(page_size);
+
+    patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyGTZero(page, "page number");
+
+    const offset = (page - 1) * limit;
+
+    const Category = models.category;
+
+    const { count, rows } = await Category.findAndCountAll({
+      limit,
+      offset,
+      attributes: ["id", "category_name", "image", "created_at"],
+    });
+
+    res
+      .status(HTTPStatus.OK)
+      .json(buildPaginationMeta(count, limit, page, rows));
+  } catch (exception) {
+    res.status(exception.status || 500).json({
+      message: exception.message || "Internal server error",
     });
   }
 });
