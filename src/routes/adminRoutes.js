@@ -12,6 +12,41 @@ import buildPaginationMeta from "../utility/buildPaginationMeta.js";
 
 const router = express.Router();
 
+router.get('/users/:userId',async(req,res)=>{
+
+  try{
+
+    roleChecker.isAdmin(req.role);
+
+    const userId = req.params.userId;
+
+    const User = models.user;
+
+    const user = await User.findByPk(userId);
+
+     // check if user exists
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+    
+    res.json(user);
+
+
+
+   
+  }catch(err){
+
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
+
+
+
+
+})
 router.patch("/users/:userId", async (req, res) => {
   try {
     patternChecker.verifyEmptyData({ body: req.body });
