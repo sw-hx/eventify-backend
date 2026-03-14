@@ -79,19 +79,41 @@ const patternChecker = {
       );
     }
   },
-  verifyPriceOrId(price, filedName) {
-    if (!Number.isFinite(price)) {
+  verifyNotNegative(num, filedName) {
+    if (!Number.isFinite(num)) {
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
         `${filedName || "mony"} should be a number `,
       );
     }
 
-    if (price < 0)
+    if (num < 0)
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
         `${filedName || "mony"} cannot have negative value `,
       );
+  },
+  verifyGTZero(num, filedName) {
+    if (!Number.isFinite(num)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${filedName || "mony"} should be a number `,
+      );
+    }
+
+    if (num < 1)
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${filedName || "mony"} cannot be  less than 1 `,
+      );
+  },
+  verifyNumber(num, filedName) {
+    if (!Number.isFinite(num)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${filedName || "number"} cannot be ${num} it should has number formate `,
+      );
+    }
   },
 
   verifyUrlPattern(url, fieldName) {

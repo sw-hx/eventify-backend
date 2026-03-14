@@ -59,9 +59,9 @@ router.post("/", async (req, res) => {
 
     //now verify the input formate
     //numeric values
-    patternChecker.verifyPriceOrId(category_id, "category_ID");
-    patternChecker.verifyPriceOrId(availability_count, "availability_count");
-    patternChecker.verifyPriceOrId(price_per_hour, "price_per_hour");
+    patternChecker.verifyNotNegative(category_id, "category_ID");
+    patternChecker.verifyNotNegative(availability_count, "availability_count");
+    patternChecker.verifyNotNegative(price_per_hour, "price_per_hour");
     patternChecker.verifyCoordinates(latitude, longitude);
     // url values
     if (main_image !== null)
