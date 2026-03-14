@@ -6,11 +6,52 @@ import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import models from "../models/index.js";
 import isExist from "../dao/servicesDAO/isExist.js";
 import addService from "../dao/servicesDAO/addService.js";
+import {USER_ROLE} from '../enums/userInfoEnum.js'
+import generateGoogleMapLink from '../utility/generateGoogleMapLink.js'
 const router = express.Router();
 
 /**
  * To do in the feature the provider name will be another table so we wil edit this endpoint
  */
+router.get('/:serviceId',async(req,res)=>{
+  try{
+
+    const {serviceId} = req.params;
+
+    const service =  await models.service.findByPk(serviceId);
+
+      if (!service) {
+      return res.status(404).json({
+        message: "Service not found",
+      });
+    }
+
+
+    const googleMapLink = generateGoogleMapLink(service.latitude,service.longitude)
+
+    const serviceData = service.toJSON();
+
+serviceData.googleMapLink = googleMapLink;
+
+if (req.role === USER_ROLE.ADMIN) {
+  res.json(serviceData);
+} else {
+  delete serviceData.latitude;
+  delete serviceData.longitude;
+  res.json(serviceData);
+}
+
+
+
+
+  }catch(err){
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+
+  }
+
+})
 router.post("/", async (req, res) => {
   try {
     //verify user is admin to add category
@@ -146,5 +187,7 @@ router.post("/", async (req, res) => {
     });
   }
 });
+
+
 
 export default router;
