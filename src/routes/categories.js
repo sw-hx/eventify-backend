@@ -7,6 +7,7 @@ import HTTPStatus from "../enums/httpCodeEnum.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import models from "../models/index.js";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
+import { Op } from "sequelize";
 
 const router = express.Router();
 
@@ -122,19 +123,29 @@ router.patch("/:categoryId", async (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    let { page = 1, page_size = 10 } = req.query;
+    let { page = 1, page_size = 10, search = "" } = req.query;
 
     page = Number(page);
     const limit = Number(page_size);
-
     patternChecker.verifyGTZero(limit, "page size");
     patternChecker.verifyGTZero(page, "page number");
-
     const offset = (page - 1) * limit;
 
+    /**
+     * Database
+     */
     const Category = models.category;
 
+    const where = {};
+
+    if (search) {
+      where.category_name = {
+        [Op.like]: `${search}%`,
+      };
+    }
+
     const { count, rows } = await Category.findAndCountAll({
+      where,
       limit,
       offset,
       attributes: ["id", "category_name", "image", "created_at"],
