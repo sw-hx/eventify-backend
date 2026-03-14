@@ -161,4 +161,35 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    /**
+     * database
+     */
+    const Category = models.category;
+    const category = await Category.findByPk(id);
+
+    if (!category)
+      errorFormatter.throwError(
+        HTTPStatus.NOT_FOUND,
+        `there is no category with id :${id} `,
+      );
+
+    const response = {
+      id: category.id,
+      category_name: category.category_name,
+      image: category.image,
+      commission: category.commission,
+      fixed_fee: category.fixed_fee,
+    };
+    res.status(HTTPStatus.OK).json(response);
+  } catch (exception) {
+    res.status(exception.status || 500).json({
+      message: exception.message || "Internal server error",
+    });
+  }
+});
+
 export default router;
