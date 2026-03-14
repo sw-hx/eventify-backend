@@ -7,7 +7,8 @@ import HTTPStatus from "../enums/httpCodeEnum.js";
 import { Op } from "sequelize";
 import bookService from "../dao/book-service/bookService.js";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
-
+import getUserInfo from "../dao/users/getUserInfo.js";
+import nodemailer from "nodemailer";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -128,6 +129,41 @@ router.post("/", async (req, res) => {
       scheduledDate,
       duration_hours,
     );
+
+    /**
+     * now send email to user and admin
+     */
+    /////////////////////
+    const user = await getUserInfo(req.email);
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: process.env.EMAIL_PORT,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `Eventify" <${process.env.EMAIL_USER}>`,
+      to: req.email,
+      subject: `Booking service confirmation ${service.service_name} `,
+      html: `<p>Hi ${user.full_name},</p>
+               <p>You have booked service name : ${service.service_name} \n
+               the booking price details is : \n
+               duration hours ${response.pricing.duration_hours}$ \n
+               price per hour : ${response.pricing.price_per_hour}$ \n
+               base price : ${response.pricing.base_price}$ \n
+               commission percentage: ${response.pricing.commission_percentage}% \n
+               commission amount: ${response.pricing.commission_amount}$ \n
+               fixed_fee_amount: ${response.pricing.fixed_fee_amount}$ \n
+               total_price : ${response.pricing.total_price}$ \n
+               </p>`,
+    });
+
+    ////////////////////
 
     res.status(HTTPStatus.CREATED).json(response);
   } catch (exception) {

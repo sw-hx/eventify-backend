@@ -33,7 +33,36 @@ const bookService = async (
 
     await transaction.commit();
 
-    return { service_booked, service };
+    /**
+     *
+     * now the report for the user
+     *
+     */
+
+    // Total price calculation
+    const basePrice = price_per_hour * duration_hours;
+    const commissionAmount = commission * basePrice;
+    const fixedFeeAmount = fixed_fee * duration_hours;
+    const totalPrice = basePrice + commissionAmount + fixedFeeAmount;
+
+    return {
+      booking: service_booked.toJSON(),
+      service: {
+        id: service.id,
+        name: service.service_name,
+        provider: service.provider_name,
+        remaining_availability: service.availability_count,
+      },
+      pricing: {
+        duration_hours,
+        price_per_hour,
+        base_price: basePrice,
+        commission_percentage: commission,
+        commission_amount: commissionAmount,
+        fixed_fee_amount: fixedFeeAmount,
+        total_price: totalPrice,
+      },
+    };
   } catch (exception) {
     if (transaction) await transaction.rollback();
     const message = `Error cannot book service : ${service.service_name}`;
