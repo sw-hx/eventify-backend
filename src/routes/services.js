@@ -8,6 +8,9 @@ import isExist from "../dao/servicesDAO/isExist.js";
 import addService from "../dao/servicesDAO/addService.js";
 import {USER_ROLE} from '../enums/userInfoEnum.js'
 import generateGoogleMapLink from '../utility/generateGoogleMapLink.js'
+import { Op } from "sequelize";
+import buildPaginationMeta from "../utility/buildPaginationMeta.js";
+
 const router = express.Router();
 
 /**
@@ -354,6 +357,88 @@ router.patch("/:serviceId", async (req, res) => {
     });
   }
 });
+router.get("/", async (req, res) => {
+  try {
+    
+
+    let {
+      category_id,
+      city,
+      country,
+      min_price,
+      max_price,
+      price_sort,
+      search,
+      page = 1,
+      page_size = 10,
+    } = req.query;
+
+    const Service = models.service;
+    const where = {};
+
+    if (category_id !== undefined) {
+      const catId = Number(category_id);
+      patternChecker.verifyGTZero(catId, "category_id");
+      where.category_id = catId;
+    }
+
+    if (city !== undefined) {
+      patternChecker.verifyCityPattern(city);
+      where.city = city;
+    }
+
+    if (country !== undefined) {
+      patternChecker.verifyCityPattern(country);
+      where.country = country;
+    }
+
+    if (min_price !== undefined || max_price !== undefined) {
+      where.price_per_hour = {};
+      if (min_price !== undefined) {
+        const min = Number(min_price);
+        patternChecker.verifyNotNegative(min, "min_price");
+        where.price_per_hour[Op.gte] = min;
+      }
+      if (max_price !== undefined) {
+        const max = Number(max_price);
+        patternChecker.verifyNotNegative(max, "max_price");
+        where.price_per_hour[Op.lte] = max;
+      }
+    }
+
+    if (search !== undefined) {
+      where.service_name = { [Op.like]: `${search}%` };
+    }
+
+    const order = [];
+    if (price_sort !== undefined) {
+      if (!["ASC", "DESC"].includes(price_sort.toUpperCase())) {
+        errorFormatter.throwError(400, "price_sort must be ASC or DESC");
+      }
+      order.push(["price_per_hour", price_sort.toUpperCase()]);
+    }
+
+    page = Number(page);
+    const limit = Number(page_size);
+    patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyGTZero(page, "page number");
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await Service.findAndCountAll({
+      where,
+      order,
+      limit,
+      offset,
+    });
+
+    res.status(200).json(buildPaginationMeta(count, limit, page, rows));
+  } catch (err) {
+    res.status(err.status || 500).json({
+      message: err.message || "Internal server error",
+    });
+  }
+});
+
 
 
 
