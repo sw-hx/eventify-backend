@@ -150,20 +150,18 @@ const patternChecker = {
   },
   verifyIsDate(inputDate, fieldName) {
     const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?$/;
-
-    if (!isoRegex.test(inputDate)) {
+    const date = new Date(inputDate);
+    if (isNaN(date.getTime())) {
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
-        `${fieldName || "input date "}  must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)`,
+        `${fieldName || "input date "} must be a valid date`,
       );
-
-      const date = new Date(inputDate);
-      if (isNaN(date.getTime())) {
-        errorFormatter.throwError(
-          HTTPStatus.BAD_REQUEST,
-          `${fieldName || "input date "} must be a valid date`,
-        );
-      }
+    }
+    if (!isoRegex.test(date.toISOString())) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `${fieldName || "input date "}must be in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)`,
+      );
     }
   },
 };
