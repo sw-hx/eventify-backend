@@ -9,58 +9,161 @@ import bookService from "../dao/book-service/bookService.js";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
 import getUserInfo from "../dao/users/getUserInfo.js";
 import nodemailer from "nodemailer";
-import priceForBookedService from "../dao/book-service/price_object_generator.js";
+import mapBookingToDTO from "../dto/mapBookingToDTO.js";
+
 const router = express.Router();
 
-//only for admin
-router.get("/:id", async (req, res) => {
+router.get("/user-bookings", async (req, res) => {
   try {
-    //check admin
-    roleChecker.isAdmin(req.role);
+    let {
+      service_id,
+      category_id,
+      service_scheduled_date,
+      duration_hours,
+      price_at_booking,
+      commission_at_booking,
+      fixed_fee_at_booking,
+      input_price_sort,
+      search = "",
+      page = 1,
+      page_size = 10,
+    } = req.query;
 
-    //now get the id from url
-    const id = Number(req.params.id);
-    patternChecker.verifyGTZero(id, "booked id ");
+    const ServiceBooking = models.service_booking;
+    const where = {};
+    const include = [];
+    let order = [];
 
-    //now fetch the booking information for the database
-    const Service = await models.service;
-    const user = await models.user;
-    const booked_service = await models.service_booking.findByPk(id, {
-      include: [
-        {
-          model: Service,
-          as: "service",
-        },
-        {
-          model: user,
-          as: "user",
-        },
-      ],
-    });
-
-    if (!booked_service)
-      errorFormatter.throwError(
-        HTTPStatus.NOT_FOUND,
-        `booked service with id:${id} cannot found `,
-      );
+    /**
+     * setup the pagination
+     */
+    page = Number(page);
+    const limit = Number(page_size);
+    patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyGTZero(page, "page number");
+    const offset = (page - 1) * limit;
 
     /**
      *
-     * Now building the response
+     * now extracting the data
      *
      */
+    where.user_id = req.userId;
 
-    const booked_by = {
-      full_name: booked_service.user.full_name,
-      email: booked_service.user.email,
-    };
-    const price = priceForBookedService(booked_service);
+    if (service_id) {
+      const serviceId = Number(service_id);
+      patternChecker.verifyGTZero(serviceId, "service id");
+      where.service_id = serviceId;
+    }
 
-    res.status(HTTPStatus.OK).send({
-      booked_by,
-      service_name: booked_service.service.service_name,
-      price,
+    if (category_id) {
+      const categoryId = Number(category_id);
+      patternChecker.verifyGTZero(categoryId, "category id");
+      include.push({
+        model: models.service,
+        as: "service",
+        required: true, // for join
+        where: {
+          category_id: categoryId,
+        },
+      });
+    }
+
+    if (duration_hours) {
+      const duration = Number(duration_hours);
+      patternChecker.verifyGTZero(duration, "duration hours");
+      where.duration_hours = duration;
+    }
+
+    if (price_at_booking) {
+      const priceAtBooking = Number(price_at_booking);
+      patternChecker.verifyNotNegative(priceAtBooking, "price at booking ");
+      where.price_at_booking = priceAtBooking;
+    }
+
+    if (commission_at_booking) {
+      const commissionAtBooking = Number(commission_at_booking);
+      patternChecker.verifyNotNegative(
+        commissionAtBooking,
+        "commission at booking ",
+      );
+      where.commission_at_booking = commissionAtBooking;
+    }
+
+    if (fixed_fee_at_booking) {
+      const fixedFeeAtBooking = Number(fixed_fee_at_booking);
+      patternChecker.verifyNotNegative(
+        fixedFeeAtBooking,
+        "fixed fee at booking ",
+      );
+      where.fixed_fee_at_booking = fixedFeeAtBooking;
+    }
+
+    if (service_scheduled_date) {
+      const date = new Date(service_scheduled_date);
+
+      patternChecker.verifyIsDate(date);
+      where.service_scheduled_date = {
+        [Op.gt]: date,
+      };
+    }
+
+    /**
+     * for sorting
+     */
+
+    if (input_price_sort === "price_asc") {
+      order = [["price_at_booking", "ASC"]];
+    } else if (input_price_sort === "price_desc") {
+      order = [["price_at_booking", "DESC"]];
+    } else {
+      order = [["created_at", "DESC"]];
+    }
+
+    /**
+     *
+     * for searching
+     */
+    if (search && search.trim() !== "") {
+      const trimmedSearch = search.trim();
+      include.push({
+        model: models.service,
+        as: "service",
+        required: true,
+        where: {
+          service_name: {
+            [Op.like]: `${trimmedSearch}%`,
+          },
+        },
+      });
+    } else {
+      include.push({
+        model: models.service,
+        as: "service",
+      });
+    }
+    include.push({
+      model: models.user,
+      as: "user",
     });
+    /**
+     *
+     * Now the query
+     */
+
+    const { count, rows } = await ServiceBooking.findAndCountAll({
+      where,
+      include,
+      limit,
+      offset,
+      order,
+      distinct: true,
+    });
+
+    const mappedRows = rows.map(mapBookingToDTO);
+    res
+      .status(HTTPStatus.OK)
+      .json(buildPaginationMeta(count, limit, page, mappedRows));
   } catch (exception) {
     res.status(exception.status || 500).json({
       message: exception.message || "Internal server error",
@@ -107,17 +210,7 @@ router.get("/user/:id", async (req, res) => {
      *
      */
 
-    const booked_by = {
-      full_name: booked_service.user.full_name,
-      email: booked_service.user.email,
-    };
-    const price = priceForBookedService(booked_service);
-
-    res.status(HTTPStatus.OK).send({
-      booked_by,
-      service_name: booked_service.service.service_name,
-      price,
-    });
+    res.status(HTTPStatus.OK).send(mapBookingToDTO(booked_service));
   } catch (exception) {
     res.status(exception.status || 500).json({
       message: exception.message || "Internal server error",
@@ -149,6 +242,11 @@ router.get("/", async (req, res) => {
     const where = {};
     const include = [];
     let order = [];
+
+    include.push({
+      model: models.user,
+      as: "user",
+    });
 
     /**
      * setup the pagination
@@ -277,9 +375,11 @@ router.get("/", async (req, res) => {
       order,
       distinct: true,
     });
+
+    const mappedRows = rows.map(mapBookingToDTO);
     res
       .status(HTTPStatus.OK)
-      .json(buildPaginationMeta(count, limit, page, rows));
+      .json(buildPaginationMeta(count, limit, page, mappedRows));
   } catch (exception) {
     res.status(exception.status || 500).json({
       message: exception.message || "Internal server error",
@@ -287,6 +387,7 @@ router.get("/", async (req, res) => {
   }
 });
 
+// client user can only see his bookings
 router.post("/", async (req, res) => {
   try {
     /**
@@ -442,6 +543,52 @@ router.post("/", async (req, res) => {
     ////////////////////
 
     res.status(HTTPStatus.CREATED).json(response);
+  } catch (exception) {
+    res.status(exception.status || 500).json({
+      message: exception.message || "Internal server error",
+    });
+  }
+});
+
+//only for admin (get booking details )
+router.get("/:id", async (req, res) => {
+  try {
+    //check admin
+    roleChecker.isAdmin(req.role);
+
+    //now get the id from url
+    const id = Number(req.params.id);
+    patternChecker.verifyGTZero(id, "booked id ");
+
+    //now fetch the booking information for the database
+    const Service = await models.service;
+    const user = await models.user;
+    const booked_service = await models.service_booking.findByPk(id, {
+      include: [
+        {
+          model: Service,
+          as: "service",
+        },
+        {
+          model: user,
+          as: "user",
+        },
+      ],
+    });
+
+    if (!booked_service)
+      errorFormatter.throwError(
+        HTTPStatus.NOT_FOUND,
+        `booked service with id:${id} cannot found `,
+      );
+
+    /**
+     *
+     * Now building the response
+     *
+     */
+
+    res.status(HTTPStatus.OK).send(mapBookingToDTO(booked_service));
   } catch (exception) {
     res.status(exception.status || 500).json({
       message: exception.message || "Internal server error",
