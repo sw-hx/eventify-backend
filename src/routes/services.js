@@ -6,8 +6,8 @@ import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import models from "../models/index.js";
 import isExist from "../dao/servicesDAO/isExist.js";
 import addService from "../dao/servicesDAO/addService.js";
-import {USER_ROLE} from '../enums/userInfoEnum.js'
-import generateGoogleMapLink from '../utility/generateGoogleMapLink.js'
+import { USER_ROLE } from "../enums/userInfoEnum.js";
+import generateGoogleMapLink from "../utility/generateGoogleMapLink.js";
 import { Op } from "sequelize";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
 
@@ -16,49 +16,44 @@ const router = express.Router();
 /**
  * To do in the feature the provider name will be another table so we wil edit this endpoint
  */
-router.get('/:serviceId',async(req,res)=>{
-  try{
-
+router.get("/:serviceId", async (req, res) => {
+  try {
     let { serviceId } = req.params;
 
-    serviceId = Number(serviceId)
+    serviceId = Number(serviceId);
 
-    patternChecker.verifyGTZero(serviceId,'service id')
+    patternChecker.verifyGTZero(serviceId, "service id");
 
-    const service =  await models.service.findByPk(serviceId);
+    const service = await models.service.findByPk(serviceId);
 
-      if (!service) {
+    if (!service) {
       return res.status(404).json({
         message: "Service not found",
       });
     }
 
-
-    const googleMapLink = generateGoogleMapLink(service.latitude,service.longitude)
+    const googleMapLink = generateGoogleMapLink(
+      service.latitude,
+      service.longitude,
+    );
 
     const serviceData = service.toJSON();
 
-serviceData.googleMapLink = googleMapLink;
+    serviceData.googleMapLink = googleMapLink;
 
-if (req.role === USER_ROLE.ADMIN) {
-  res.json(serviceData);
-} else {
-  delete serviceData.latitude;
-  delete serviceData.longitude;
-  res.json(serviceData);
-}
-
-
-
-
-  }catch(err){
+    if (req.role === USER_ROLE.ADMIN) {
+      res.json(serviceData);
+    } else {
+      delete serviceData.latitude;
+      delete serviceData.longitude;
+      res.json(serviceData);
+    }
+  } catch (err) {
     res.status(err.status || 500).json({
       message: err.message || "Internal server error",
     });
-
   }
-
-})
+});
 router.post("/", async (req, res) => {
   try {
     //verify user is admin to add category
@@ -160,7 +155,7 @@ router.post("/", async (req, res) => {
     if (existingService) {
       // Throw a custom error before saving
       errorFormatter.throwError(
-        HTTPStatus.CONFLICT 
+        HTTPStatus.CONFLICT,
         `Service '${service_name}' already exists for the this user.`,
       );
     }
@@ -202,9 +197,9 @@ router.patch("/:serviceId", async (req, res) => {
 
     let { serviceId } = req.params;
 
-    serviceId = Number(serviceId)
+    serviceId = Number(serviceId);
 
-    patternChecker.verifyGTZero(serviceId,'service id')
+    patternChecker.verifyGTZero(serviceId, "service id");
 
     const service = await models.service.findByPk(serviceId);
 
@@ -230,7 +225,9 @@ router.patch("/:serviceId", async (req, res) => {
     } = req.body;
 
     const category_id =
-      req.body.category_id !== undefined ? Number(req.body.category_id) : undefined;
+      req.body.category_id !== undefined
+        ? Number(req.body.category_id)
+        : undefined;
 
     const availability_count =
       req.body.availability_count !== undefined
@@ -262,7 +259,10 @@ router.patch("/:serviceId", async (req, res) => {
     }
 
     if (availability_count !== undefined) {
-      patternChecker.verifyNotNegative(availability_count, "availability_count");
+      patternChecker.verifyNotNegative(
+        availability_count,
+        "availability_count",
+      );
       service.availability_count = availability_count;
     }
 
@@ -319,32 +319,38 @@ router.patch("/:serviceId", async (req, res) => {
     }
 
     if (main_image !== undefined) {
-      if (main_image !== null) patternChecker.verifyUrlPattern(main_image, "main_image");
+      if (main_image !== null)
+        patternChecker.verifyUrlPattern(main_image, "main_image");
       service.main_image = main_image;
     }
 
     if (sub_image1 !== undefined) {
-      if (sub_image1 !== null) patternChecker.verifyUrlPattern(sub_image1, "sub_image1");
+      if (sub_image1 !== null)
+        patternChecker.verifyUrlPattern(sub_image1, "sub_image1");
       service.sub_image1 = sub_image1;
     }
 
     if (sub_image2 !== undefined) {
-      if (sub_image2 !== null) patternChecker.verifyUrlPattern(sub_image2, "sub_image2");
+      if (sub_image2 !== null)
+        patternChecker.verifyUrlPattern(sub_image2, "sub_image2");
       service.sub_image2 = sub_image2;
     }
 
     if (sub_image3 !== undefined) {
-      if (sub_image3 !== null) patternChecker.verifyUrlPattern(sub_image3, "sub_image3");
+      if (sub_image3 !== null)
+        patternChecker.verifyUrlPattern(sub_image3, "sub_image3");
       service.sub_image3 = sub_image3;
     }
 
     if (sub_image4 !== undefined) {
-      if (sub_image4 !== null) patternChecker.verifyUrlPattern(sub_image4, "sub_image4");
+      if (sub_image4 !== null)
+        patternChecker.verifyUrlPattern(sub_image4, "sub_image4");
       service.sub_image4 = sub_image4;
     }
 
     if (sub_image5 !== undefined) {
-      if (sub_image5 !== null) patternChecker.verifyUrlPattern(sub_image5, "sub_image5");
+      if (sub_image5 !== null)
+        patternChecker.verifyUrlPattern(sub_image5, "sub_image5");
       service.sub_image5 = sub_image5;
     }
 
@@ -359,8 +365,6 @@ router.patch("/:serviceId", async (req, res) => {
 });
 router.get("/", async (req, res) => {
   try {
-    
-
     let {
       category_id,
       city,
@@ -438,8 +442,5 @@ router.get("/", async (req, res) => {
     });
   }
 });
-
-
-
 
 export default router;
