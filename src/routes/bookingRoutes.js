@@ -8,8 +8,9 @@ import { Op } from "sequelize";
 import bookService from "../dao/book-service/bookService.js";
 import buildPaginationMeta from "../utility/buildPaginationMeta.js";
 import getUserInfo from "../dao/users/getUserInfo.js";
-import nodemailer from "nodemailer";
 import mapBookingToDTO from "../dto/mapBookingToDTO.js";
+import emailSender from "../utility/email/emailSender.js";
+import emailTemplates from "../utility/email/emailTemplates.js";
 
 const router = express.Router();
 
@@ -513,33 +514,30 @@ router.post("/", async (req, res) => {
      */
     /////////////////////
     const user = await getUserInfo(req.email);
-    const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+    const adminCreateService = await models.user.findByPk(service.created_by);
+    console.log(adminCreateService);
+    //send email to user who booked the service
+    emailSender(
+      user.email,
+      "booking information",
+      emailTemplates.userBookedService(
+        user.full_name,
+        service.service_name,
+        response.pricing,
+      ),
+    );
 
-    await transporter.sendMail({
-      from: `Eventify" <${process.env.EMAIL_USER}>`,
-      to: req.email,
-      subject: `Booking service confirmation ${service.service_name} `,
-      html: `<p>Hi ${user.full_name},</p>
-               <p>You have booked service name : ${service.service_name}
-               the booking price details is :
-               duration hours ${response.pricing.duration_hours}$ 
-               price per hour : ${response.pricing.price_per_hour}$
-               base price : ${response.pricing.base_price}$ 
-               commission percentage: ${response.pricing.commission_percentage}%
-               commission amount: ${response.pricing.commission_amount}$ 
-               fixed_fee_amount: ${response.pricing.fixed_fee_amount}$ 
-               total_price : ${response.pricing.total_price}$ 
-               </p>`,
-    });
-
+    //send email to admin who create the service
+    emailSender(
+      adminCreateService.email,
+      "booking information",
+      emailTemplates.serviceOwnerBookedNotification(
+        adminCreateService.full_name,
+        service.service_name,
+        response.pricing,
+        user.email,
+      ),
+    );
     ////////////////////
 
     res.status(HTTPStatus.CREATED).json(response);
