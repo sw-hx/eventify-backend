@@ -88,6 +88,14 @@ N8N_WEBHOOK_EMAIL_SENDER=https://your-n8n-server/webhook/email
 npm run dev
 ```
 
+## Notes
+
+- Make sure the N8N workflow is configured to handle incoming **POST requests** and send emails.
+
+- The workflow should expect **email**, **subject**, and **message** fields in the request JSON.
+
+The backend does not retry automatically on failure (handle retries in N8N)
+
 ## 📝 Issues & Contributions
 
 If you encounter any problems, have questions, or want to contribute:
