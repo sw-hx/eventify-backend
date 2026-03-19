@@ -425,6 +425,7 @@ router.get("/", async (req, res) => {
     page = Number(page);
     const limit = Number(page_size);
     patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyPageSizeLimit(limit);
     patternChecker.verifyGTZero(page, "page number");
     const offset = (page - 1) * limit;
 

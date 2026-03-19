@@ -32,7 +32,6 @@ router.get("/user-bookings", async (req, res) => {
 
     const ServiceBooking = models.service_booking;
     const where = {};
-    const include = [];
     let order = [];
 
     /**
@@ -41,6 +40,7 @@ router.get("/user-bookings", async (req, res) => {
     page = Number(page);
     const limit = Number(page_size);
     patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyPageSizeLimit(limit);
     patternChecker.verifyGTZero(page, "page number");
     const offset = (page - 1) * limit;
 
@@ -55,19 +55,6 @@ router.get("/user-bookings", async (req, res) => {
       const serviceId = Number(service_id);
       patternChecker.verifyGTZero(serviceId, "service id");
       where.service_id = serviceId;
-    }
-
-    if (category_id) {
-      const categoryId = Number(category_id);
-      patternChecker.verifyGTZero(categoryId, "category id");
-      include.push({
-        model: models.service,
-        as: "service",
-        required: true, // for join
-        where: {
-          category_id: categoryId,
-        },
-      });
     }
 
     if (duration_hours) {
@@ -122,36 +109,58 @@ router.get("/user-bookings", async (req, res) => {
     }
 
     /**
+     * now these need joining
+     */
+
+    const serviceWhere = {}; // we need these options to filter service table when joining it
+
+    if (category_id) {
+      const categoryId = Number(category_id);
+      patternChecker.verifyGTZero(categoryId, "category id");
+      serviceWhere.category_id = categoryId;
+    }
+
+    /**
      *
      * for searching
      */
     if (search && search.trim() !== "") {
       const trimmedSearch = search.trim();
-      include.push({
-        model: models.service,
-        as: "service",
-        required: true,
-        where: {
-          service_name: {
-            [Op.like]: `${trimmedSearch}%`,
-          },
-        },
-      });
-    } else {
-      include.push({
-        model: models.service,
-        as: "service",
-      });
+
+      serviceWhere.service_name = {
+        [Op.like]: `${trimmedSearch}%`,
+      };
     }
-    include.push({
-      model: models.user,
-      as: "user",
-    });
+
     /**
      *
-     * Now the query
+     * Now the joining
      */
 
+    const include = [
+      {
+        model: models.service,
+        as: "service",
+        where: Object.keys(serviceWhere).length ? serviceWhere : undefined,
+        required: Object.keys(serviceWhere).length > 0,
+        attributes: [
+          "id",
+          "service_name",
+          "category_id",
+          "provider_name",
+          "country",
+          "city",
+          "main_image",
+        ],
+      },
+      {
+        model: models.user,
+        as: "user",
+        attributes: ["email", "full_name", "profile_image"],
+      },
+    ];
+
+    //now the query
     const { count, rows } = await ServiceBooking.findAndCountAll({
       where,
       include,
@@ -241,13 +250,7 @@ router.get("/", async (req, res) => {
 
     const ServiceBooking = models.service_booking;
     const where = {};
-    const include = [];
     let order = [];
-
-    include.push({
-      model: models.user,
-      as: "user",
-    });
 
     /**
      * setup the pagination
@@ -255,6 +258,7 @@ router.get("/", async (req, res) => {
     page = Number(page);
     const limit = Number(page_size);
     patternChecker.verifyGTZero(limit, "page size");
+    patternChecker.verifyPageSizeLimit(limit);
     patternChecker.verifyGTZero(page, "page number");
     const offset = (page - 1) * limit;
 
@@ -264,29 +268,16 @@ router.get("/", async (req, res) => {
      *
      */
 
-    if (service_id) {
-      const serviceId = Number(service_id);
-      patternChecker.verifyGTZero(serviceId, "service id");
-      where.service_id = serviceId;
-    }
-
     if (user_id) {
       const userId = Number(user_id);
       patternChecker.verifyGTZero(userId, "user id");
       where.user_id = userId;
     }
 
-    if (category_id) {
-      const categoryId = Number(category_id);
-      patternChecker.verifyGTZero(categoryId, "category id");
-      include.push({
-        model: models.service,
-        as: "service",
-        required: true, // for join
-        where: {
-          category_id: categoryId,
-        },
-      });
+    if (service_id) {
+      const serviceId = Number(service_id);
+      patternChecker.verifyGTZero(serviceId, "service id");
+      where.service_id = serviceId;
     }
 
     if (duration_hours) {
@@ -341,33 +332,58 @@ router.get("/", async (req, res) => {
     }
 
     /**
+     * now these need joining
+     */
+
+    const serviceWhere = {}; // we need these options to filter service table when joining it
+
+    if (category_id) {
+      const categoryId = Number(category_id);
+      patternChecker.verifyGTZero(categoryId, "category id");
+      serviceWhere.category_id = categoryId;
+    }
+
+    /**
      *
      * for searching
      */
     if (search && search.trim() !== "") {
       const trimmedSearch = search.trim();
-      include.push({
-        model: models.service,
-        as: "service",
-        required: true,
-        where: {
-          service_name: {
-            [Op.like]: `${trimmedSearch}%`,
-          },
-        },
-      });
-    } else {
-      include.push({
-        model: models.service,
-        as: "service",
-      });
+
+      serviceWhere.service_name = {
+        [Op.like]: `${trimmedSearch}%`,
+      };
     }
 
     /**
      *
-     * Now the query
+     * Now the joining
      */
 
+    const include = [
+      {
+        model: models.service,
+        as: "service",
+        where: Object.keys(serviceWhere).length ? serviceWhere : undefined,
+        required: Object.keys(serviceWhere).length > 0,
+        attributes: [
+          "id",
+          "service_name",
+          "category_id",
+          "provider_name",
+          "country",
+          "city",
+          "main_image",
+        ],
+      },
+      {
+        model: models.user,
+        as: "user",
+        attributes: ["email", "full_name", "profile_image"],
+      },
+    ];
+
+    //now the query
     const { count, rows } = await ServiceBooking.findAndCountAll({
       where,
       include,
@@ -388,7 +404,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// client user can only see his bookings
+// client book service
 router.post("/", async (req, res) => {
   try {
     /**
@@ -448,7 +464,7 @@ router.post("/", async (req, res) => {
         "the service want to book is not available",
       );
 
-    if (service.availability_count <= duration_hours)
+    if (service.availability_count < duration_hours)
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
         `you cannot book ${service.service_name} for duration: ${duration_hours} , the only available duration for booking is ${service.availability_count}`,
@@ -459,9 +475,9 @@ router.post("/", async (req, res) => {
       service_scheduled_date,
       "service scheduled date ",
     );
+
     const scheduledDate = new Date(service_scheduled_date);
     const now = new Date();
-
     if (scheduledDate <= now) {
       errorFormatter.throwError(
         HTTPStatus.BAD_REQUEST,
@@ -515,7 +531,7 @@ router.post("/", async (req, res) => {
     /////////////////////
     const user = await getUserInfo(req.email);
     const adminCreateService = await models.user.findByPk(service.created_by);
-    console.log(adminCreateService);
+
     //send email to user who booked the service
     emailSender(
       user.email,

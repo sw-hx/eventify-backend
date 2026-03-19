@@ -3,6 +3,7 @@ export const ACCOUNT_STATUS = Object.freeze({
   ACTIVE: "active",
   PENDING: "pending",
   SUSPENDED: "suspended",
+  BANNED: "banned",
 });
 
 // Allowed user roles
