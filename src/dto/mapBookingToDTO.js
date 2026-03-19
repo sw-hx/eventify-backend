@@ -16,7 +16,7 @@ const mapBookingToDTO = (booking) => {
       id: booking.service.id,
       name: booking.service.service_name,
       provider: booking.service.provider_name,
-      price_per_hour: Number(booking.service.price_per_hour),
+      price_per_hour: Number(booking.price_at_booking),
       location: {
         country: booking.service.country,
         city: booking.service.city,

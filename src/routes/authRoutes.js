@@ -1,4 +1,5 @@
 import express from "express";
+import verifyAccountStatusMiddleware from "../middleware/accountStatusMiddleware.js";
 import patternChecker from "../utility/patternCheckerHelperFunction.js";
 import errorFormatter from "../utility/errorFormatterHelperFunction.js";
 import hashPassword from "../utility/hashPassword.js";
@@ -6,7 +7,6 @@ import isExist from "../dao/users/isExist.js";
 import loginUser from "../dao/users/loginUser.js";
 import { generateToken } from "../security/jwt.js";
 import registerUser from "../dao/users/registerUser.js";
-import nodemailer from "nodemailer";
 import models from "../models/index.js";
 import TokenUtility from "../security/generateToken.js";
 import HTTPStatus from "../enums/httpCodeEnum.js";

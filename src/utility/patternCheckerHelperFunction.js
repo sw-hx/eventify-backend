@@ -164,5 +164,21 @@ const patternChecker = {
       );
     }
   },
+  verifyPageSizeLimit(num) {
+    const limit = 30;
+
+    if (!Number.isFinite(num)) {
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        "page size limit should be a number ",
+      );
+    }
+
+    if (num > limit)
+      errorFormatter.throwError(
+        HTTPStatus.BAD_REQUEST,
+        `page size limit should not be  greater than ${limit} `,
+      );
+  },
 };
 export default patternChecker;
