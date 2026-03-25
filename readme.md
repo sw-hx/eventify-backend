@@ -60,6 +60,10 @@ PORT=3000
 # Your server base URL
 BASE_URL=http://your-server-domain:3000
 
+# default admin information
+DEFAULT_ADMIN_EMAIL=admin@yourapp.com
+DEFAULT_ADMIN_PASSWORD=SuperSecure123!
+
 # ===========================
 # Database Configuration
 # ===========================
