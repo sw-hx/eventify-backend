@@ -11,6 +11,7 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import staticesRoutes from "./routes/staticesRoutes.js";
 import testDatabaseConnection from "./testing/database/connectToDatabase.js";
 import models from "./models/index.js";
+import initApp from "./script/init-default-admin.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,9 @@ testDatabaseConnection();
 
 //test module init
 console.log(models);
+
+//init backend and add default admin
+await initApp();
 
 // Middlewares
 app.use(express.json());
