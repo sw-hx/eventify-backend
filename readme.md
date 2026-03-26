@@ -35,8 +35,6 @@ It provides endpoints for managing users, services, bookings, analytics, and mor
 - Admin can:
   Create, update, and delete services
 
-> Note and each service belong to categories
-
 **-** **Booking System**
 
 - Users can:
@@ -87,7 +85,7 @@ It provides endpoints for managing users, services, bookings, analytics, and mor
 
 ## Database ERR diagram
 
-![Alt text](./mysql_database/EER/EER_Database.png" Database ERR diagram")
+![Database ERR diagram](./mysql_database/EER/EER_Database.png "Database ERR diagram")
 
 ---
 
