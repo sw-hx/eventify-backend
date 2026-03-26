@@ -56,7 +56,7 @@ router.get("/:serviceId", async (req, res) => {
 });
 router.post("/", async (req, res) => {
   try {
-    //verify user is admin to add category
+    //verify user is admin to add service
     roleChecker.isAdmin(req.role);
 
     // verify empty fields

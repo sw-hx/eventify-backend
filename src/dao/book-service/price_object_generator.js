@@ -8,12 +8,16 @@ const price = (booked_service) => {
 
   const commission_percentage_at_booking = booked_service.commission_at_booking;
 
-  const commission_amount = booked_service.commission_at_booking * based_price;
+  const commission_amount = (
+    booked_service.commission_at_booking * based_price
+  ).toFixed(2);
 
   const fixed_fee_amount_at_booking = booked_service.fixed_fee_at_booking;
 
   const totalPrice =
-    based_price + commission_amount + fixed_fee_amount_at_booking;
+    based_price +
+    Number(commission_amount) +
+    Number(fixed_fee_amount_at_booking);
 
   //now add them to object
   return {

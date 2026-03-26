@@ -5,6 +5,92 @@ It provides endpoints for managing users, services, bookings, analytics, and mor
 
 ---
 
+## Features and overview
+
+**-** **Authentication & Security**
+
+- User registration with email verification (via secure link)
+- Login using JSON Web Token (JWT)
+- Password reset via email token system
+- Secure token storage with expiration handling
+- Email ownership verification before account activation
+- Token management with expiration and usage tracking
+
+**-** **Role-Based Access Control**
+
+- Admin
+- Client
+- (Planned: Service Provider / Partner)
+
+**-** **Email Notification System**
+
+- Email verification on registration
+- Password reset emails
+- Booking confirmation emails:
+  - Sent to the user
+  - Sent to the service owner
+
+**-** **Service Management**
+
+- Admin can:
+  Create, update, and delete services
+
+> Note and each service belong to categories
+
+**-** **Booking System**
+
+- Users can:
+  - Book services with date & duration
+  - Receive booking summary via email
+- System ensures:
+  - No duplicate bookings (unique constraint)
+  - Availability tracking
+
+**-** **💰 Financial Snapshot**
+
+- Booking stores:
+  - price at booking
+  - commission percentage at booking
+  - fixed fee amount at booking
+
+> This ensures:
+> Historical accuracy even if prices or commissions change later
+
+**-** **Booking Access Control**
+
+- Users can:
+  View only their bookings
+  Search & filter bookings using query parameters
+- Admin can:
+  View all bookings in the system
+
+**-** **Category Management**
+
+- Admin can:
+  Create and update categories
+- And define:
+  Commission percentage
+  Fixed service fee for each category
+
+**-** **Analytics & Statistics**
+
+- Admin dashboard includes:
+  - Total bookings per category
+  - Revenue insights
+  - Platform commission tracking
+
+**-** **Smart Initialization**
+
+- Automatic creation of default admin on first system run if there is not any user with admin role in database
+
+---
+
+## Database ERR diagram
+
+![Alt text](./mysql_database/EER/EER_Database.png" Database ERR diagram")
+
+---
+
 ## Requirements
 
 - **Node.js**: v24 or higher
@@ -108,3 +194,7 @@ If you encounter any problems, have questions, or want to contribute:
 - Fork the repository and submit a pull request for improvements.
 
 > Your feedback is always welcome XD
+
+## ⚠️ This project was built as a learning experience and for eduction purpose only
+
+The structure and database design are not final and will be improved in future versions.
