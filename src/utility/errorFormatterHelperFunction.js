@@ -4,7 +4,7 @@ const errorFormatter = {
     console.log(err);
     console.log(`\n .............${message}..................... \n`);
   },
-  // 2 helper
+  // custom exception thrower to have a standard exception formate
   throwError: (status, message) => {
     throw {
       status: status || 500,

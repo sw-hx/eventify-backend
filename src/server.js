@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import authMiddleware from "./middleware/authMiddleware.js";
 import trimMiddleware from "./middleware/trimMiddleware.js";
 import verifyAccountStatusMiddleware from "./middleware/accountStatusMiddleware.js";
@@ -28,6 +29,21 @@ await initApp();
 // Middlewares
 app.use(express.json());
 app.use(trimMiddleware);
+
+/**
+ *
+ * IMPORTANT THIS BACKEND IS NOT SECURE FOR WEB APPLICATIONS
+ *  RIGHT NOW IT,s ONLY WORK WITH MOBILE APP SECURELY SINCE
+ *   THEY CAN STORE JWT IN SECURE STORAGE NOT LIKE WEB APP
+ */
+
+const corsOptions = {
+  origin: process.env.FRONTEND,
+  methods: ["GET", "POST", "PATCH", "DELETE"],
+  credentials: false, //since we do not support cookies yet
+};
+
+app.use(cors(corsOptions));
 
 // Routes
 app.use("/api/auth", authRoutes);
