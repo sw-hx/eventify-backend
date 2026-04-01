@@ -99,6 +99,12 @@ It provides endpoints for managing users, services, bookings, analytics, and mor
 
 ---
 
+## ⚠️ This project was built as a learning experience and for eduction purpose only and It is not recommended to run in a production environment yet.
+
+The structure and database design are not final and will be improved in future versions.
+
+---
+
 ## Installation
 
 1. **Clone the repository**
@@ -144,6 +150,9 @@ PORT=3000
 # Your server base URL
 BASE_URL=http://your-server-domain:3000
 
+# FontEnd endpoint
+FRONTEND = http://your-frontend-domain:3000
+
 # default admin information
 DEFAULT_ADMIN_EMAIL=admin@yourapp.com
 DEFAULT_ADMIN_PASSWORD=SuperSecure123!
@@ -168,14 +177,6 @@ JWT_SECRET=your_jwt_secret_key
 N8N_WEBHOOK_EMAIL_SENDER=https://your-n8n-server/webhook/email
 ```
 
-## Running the Backend
-
-### NOTE: Eventify backend is currently under heavy development.It is not recommended to run in a production environment yet.
-
-```bash
-npm run dev
-```
-
 ## Notes
 
 - Make sure the N8N workflow is configured to handle incoming **POST requests** and send emails.
@@ -183,6 +184,20 @@ npm run dev
 - The workflow should expect **email**, **subject**, and **message** fields in the request JSON.
 
 The backend does not retry automatically on failure (handle retries in N8N)
+
+# ⚠️ Security Notice
+
+This backend currently uses JWT authentication via Authorization headers.
+
+While this approach works for mobile applications (e.g., Android), it is not recommended for production web applications, as browsers may expose tokens to XSS attacks when stored in client-side storage.
+
+so please do not use it for web app yet
+
+## Running the Backend
+
+```bash
+npm run dev
+```
 
 ## 📝 Issues & Contributions
 
@@ -192,7 +207,3 @@ If you encounter any problems, have questions, or want to contribute:
 - Fork the repository and submit a pull request for improvements.
 
 > Your feedback is always welcome XD
-
-## ⚠️ This project was built as a learning experience and for eduction purpose only
-
-The structure and database design are not final and will be improved in future versions.
